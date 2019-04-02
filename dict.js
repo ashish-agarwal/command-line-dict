@@ -22,12 +22,34 @@ switch (action) {
     case 'def':
         return getDefinition(env[1]);
     case 'syn':
-        return getSynonyms(env[1])
+        return getSynonyms(env[1]);
+    case 'ant':
+        return getAntonyms(env[1]);
+}
+function getAntonyms(word) {
+    console.log("Antonyms of", word, "\n");
+    return getDataFromAPI({
+        uri: "entries/en/" + word + "/antonyms"
+    }).then(function (res) {
+        var i = 0;
+        if (res.results && res.results[0]) {
+            res.results[0].lexicalEntries.forEach(function (obj) {
+                obj.entries.length > 0 && obj.entries.forEach(function (entry) {
+                    entry.senses.length > 0 && entry.senses.forEach(function (sense) {
+                        sense.antonyms.length > 0 && sense.antonyms.forEach(function (antonym) {
+                            console.log((++i) + ')', antonym.text, '\n');
+                        })
+                    })
+                });
+            });
+        } else {
+            console.log("Result not found");
+        }
+    })
+
 }
 function getDefinition(word) {
-}
-function getDefinition(word) {
-    console.log("Meaning of", word, "\n")
+    console.log("Meaning of", word, "\n");
     return getDataFromAPI({
         uri: '/entries/en/' + word + '/regions=us'
     }).then(function (res) {
@@ -43,7 +65,7 @@ function getDefinition(word) {
         } else {
             console.log("Result not found");
         }
-    })
+    });
 }
 
 function getDataFromAPI(obj) {

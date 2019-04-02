@@ -10,8 +10,8 @@
             "name": "Launch Program",
             "program": "${workspaceFolder}/dict.js",
             "args": [
-                "def",
-                "ace1"
+                "ant",
+                "best"
             ]
         }
     ]
