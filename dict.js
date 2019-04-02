@@ -2,7 +2,6 @@ var env = process.argv.slice(2, process.argv.length);
 var API_ID = "17dd95b2";
 var API_KEY = "6ec8b1e24bfbb5399cc7554a685a3cf1";
 var OXFORD_URL = "https://od-api.oxforddictionaries.com/api/v1";
-var http = require('http');
 var action = env[0];
 
 var request = require("request");
@@ -25,12 +24,67 @@ switch (action) {
         return getSynonyms(env[1]);
     case 'ant':
         return getAntonyms(env[1]);
+    case "ex":
+        return getExamples(env[1]);
+    case 'dict':
+        return getDefinition(env[1])
+            .then(getSynonyms(env[1]))
+            .then(getAntonyms(env[1]))
+            .then(getExamples(env[1]));
+
+    default:
+        return getDefinition(env[0])
+            .then(getSynonyms(env[0]))
+            .then(getAntonyms(env[0]))
+            .then(getExamples(env[0]));
 }
+
+function getExamples(word) {
+    return getDataFromAPI({
+        uri: "entries/en/" + word + "/sentences"
+    }).then(function (res) {
+        console.log("Examples of", word, "\n");
+        var i = 0;
+        if (res.results && res.results[0]) {
+            res.results[0].lexicalEntries.forEach(function (entry) {
+                entry.sentences.length > 0 && entry.sentences.forEach(function (sentence) {
+                    console.log((++i) + ')', sentence.text, '\n');
+                });
+            });
+        } else {
+            console.log("Result not found");
+        }
+    })
+
+}
+
+function getSynonyms(word) {
+    return getDataFromAPI({
+        uri: "entries/en/" + word + "/synonyms"
+    }).then(function (res) {
+        console.log("synonyms of", word, "\n");
+        var i = 0;
+        if (res.results && res.results[0]) {
+            res.results[0].lexicalEntries.forEach(function (obj) {
+                obj.entries.length > 0 && obj.entries.forEach(function (entry) {
+                    entry.senses.length > 0 && entry.senses.forEach(function (sense) {
+                        sense.synonyms.length > 0 && sense.synonyms.forEach(function (synonym) {
+                            console.log((++i) + ')', synonym.text, '\n');
+                        })
+                    })
+                });
+            });
+        } else {
+            console.log("Result not found");
+        }
+    });
+}
+
 function getAntonyms(word) {
-    console.log("Antonyms of", word, "\n");
     return getDataFromAPI({
         uri: "entries/en/" + word + "/antonyms"
     }).then(function (res) {
+        console.log("Antonyms of", word, "\n");
         var i = 0;
         if (res.results && res.results[0]) {
             res.results[0].lexicalEntries.forEach(function (obj) {
@@ -45,14 +99,13 @@ function getAntonyms(word) {
         } else {
             console.log("Result not found");
         }
-    })
-
+    });
 }
 function getDefinition(word) {
-    console.log("Meaning of", word, "\n");
     return getDataFromAPI({
         uri: '/entries/en/' + word + '/regions=us'
     }).then(function (res) {
+        console.log("Meaning of", word, "\n");
         var i = 0;
         if (res.results && res.results[0]) {
             res.results[0].lexicalEntries.forEach(function (obj) {
