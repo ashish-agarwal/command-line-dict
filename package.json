@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "faker": "^4.1.0",
+    "nock": "^10.0.6",
     "request": "^2.88.0"
   }
 }

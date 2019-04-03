@@ -2,7 +2,9 @@ var env = process.argv.slice(2, process.argv.length);
 var API_ID = "17dd95b2";
 var API_KEY = "6ec8b1e24bfbb5399cc7554a685a3cf1";
 var OXFORD_URL = "https://od-api.oxforddictionaries.com/api/v1";
+var DUMMY_URL = "https://dummy.com/api/v1";
 var action = env[0];
+require('./dummyReq')
 
 var request = require("request");
 
@@ -16,29 +18,51 @@ var options = {
         app_id: API_ID
     }
 };
+return Promise.resolve()
+    .then(function () {
+        switch (action) {
+            case 'def':
+                return getDefinition(env[1]);
+            case 'syn':
+                return getSynonyms(env[1]);
+            case 'ant':
+                return getAntonyms(env[1]);
+            case "ex":
+                return getExamples(env[1]);
+            case 'dict':
+                return getDefinition(env[1])
+                    .then(getSynonyms(env[1]))
+                    .then(getAntonyms(env[1]))
+                    .then(getExamples(env[1]));
 
-switch (action) {
-    case 'def':
-        return getDefinition(env[1]);
-    case 'syn':
-        return getSynonyms(env[1]);
-    case 'ant':
-        return getAntonyms(env[1]);
-    case "ex":
-        return getExamples(env[1]);
-    case 'dict':
-        return getDefinition(env[1])
-            .then(getSynonyms(env[1]))
-            .then(getAntonyms(env[1]))
-            .then(getExamples(env[1]));
+            default:
+                if (env[0]) {
+                    return getDefinition(env[0])
+                        .then(getSynonyms(env[0]))
+                        .then(getAntonyms(env[0]))
+                        .then(getExamples(env[0]));
+                } else {
+                    return getRandomWord()
+                        .then(function (word) {
+                            return getDefinition(word)
+                                .then(getSynonyms(word))
+                                .then(getAntonyms(word))
+                                .then(getExamples(word));
+                        })
+                }
+        }
+    }).catch(function (err) {
+        console.log(err);
+    })
 
-    default:
-        return getDefinition(env[0])
-            .then(getSynonyms(env[0]))
-            .then(getAntonyms(env[0]))
-            .then(getExamples(env[0]));
+
+function getRandomWord() {
+    return getDataFromAPI({ uri: '/random', baseUrl: DUMMY_URL })
+        .then(function (s) {
+            return Promise.resolve(s.word);
+        })
+
 }
-
 function getExamples(word) {
     return getDataFromAPI({
         uri: "entries/en/" + word + "/sentences"
@@ -121,8 +145,10 @@ function getDefinition(word) {
     });
 }
 
+
 function getDataFromAPI(obj) {
     options.uri = obj.uri;
+    options.baseUrl = obj.baseUrl || OXFORD_URL;
     return new Promise(function (resolve, reject) {
         request(options, function (error, response, body) {
             if (error) return reject(error);
